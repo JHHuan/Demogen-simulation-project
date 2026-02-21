@@ -1,0 +1,26 @@
+name: cube
+
+task_name: ${name}
+
+shape_meta: &shape_meta
+  obs:
+    point_cloud:
+      shape: [1024, 6]
+      type: point_cloud
+    agent_pos:
+      shape: [7]
+      type: low_dim
+  action:
+    shape: [7]
+
+env_runner: null
+
+dataset:
+  _target_: diffusion_policies.dataset.panda_dataset.PandaDataset
+  zarr_path: /home/hjh/git_code/demogen/DemoGen-master/data/datasets/demogen/0216-cube_fixed_100.zarr
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  seed: 42
+  val_ratio: 0
+  max_train_episodes: null
