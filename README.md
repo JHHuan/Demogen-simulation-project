@@ -1,6 +1,6 @@
 # DemoGen 机器人仿真项目
 
-本项目整合了 [DemoGen](https://github.com/demo-generation/DemoGen) 合成演示数据生成框架与 [RoboPal](https://github.com/NoneJou072/robopal) 机器人仿真环境，用于机器人操作的视觉运动策略学习研究。
+本项目整合了 [DemoGen](https://github.com/TEA-Lab/DemoGen) 合成演示数据生成框架与 [RoboPal](https://github.com/NoneJou072/robopal) 机器人仿真环境，用于机器人操作的视觉运动策略学习研究。
 
 ## 项目概述
 
