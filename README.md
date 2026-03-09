@@ -137,6 +137,8 @@ python robopal/robopal/demos/demo_keyboard_teleop.py
 - 按 `q` 键保存轨迹到 `robopal/robopal/demos/collected_data/`
 - 按 `ESC` 退出
 
+注：需要将遥操采集的pickle文件复制在/Demogen-simulation/DemoGen-master/data/source_demos/<任务名>下，再执行步骤2
+
 ### 步骤 2: 格式转换为 Zarr
 
 将收集的 pickle 数据转换为 Zarr 格式供 DemoGen 使用：
@@ -163,6 +165,8 @@ python segment_interactive.py \
 - 左键点击选择前景点（绿色）
 - 右键点击选择背景点（红色）
 - 按 `s` 执行分割，按 `q` 保存并退出
+
+注：步骤1会自动生成第一帧图像在/Demogen-simulation/DemoGen-master/data/sam_mask下
 
 ### 步骤 4: 生成合成数据
 

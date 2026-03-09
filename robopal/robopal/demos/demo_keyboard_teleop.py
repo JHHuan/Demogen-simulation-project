@@ -333,7 +333,7 @@ def keyboard_teleop_panda_with_camera():
     os.makedirs(save_dir, exist_ok=True)
 
     # SAM mask保存目录
-    sam_mask_dir = "/home/hjh/git_code/demogen/DemoGen-master/data/sam_mask/0216-cube"
+    sam_mask_dir = "/home/hjh/git_code/demogen/DemoGen-master/data/sam_mask"
     os.makedirs(sam_mask_dir, exist_ok=True)
 
     # 轨迹数据
