@@ -31,7 +31,7 @@ Panda 机械臂键盘遥操作 Demo (标准数据格式)
 环境配置：
 - 机器人: Panda + PandaHand 爪子
 - 控制器: CARTIK (笛卡尔空间逆运动学)
-- 场景: 桌子上有一个绿色立方体
+- 场景: 桌子上有一个绿色立方体和一个红色立方体
 - 相机: demogen_camera (机械臂正前方, pos=[1.0, 0, 0.7], fovy=45)
 
 XML路径: /home/hjh/git_code/demogen/robopal/robopal/assets/scenes/grasping_demogen.xml

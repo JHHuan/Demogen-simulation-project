@@ -1,3 +1,4 @@
+#bash gen_demo.sh cube test grid 100 false
 # from re import T
 # from turtle import st
 from diffusion_policies.common.replay_buffer import ReplayBuffer
@@ -106,8 +107,8 @@ class DemoGen:
         mask = imageio.imread(os.path.join(self.data_root, f"sam_mask/{self.source_name}/{demo_idx}/{self.mask_names[object_or_target]}.jpg"))
         mask = mask > 128
 
-        # 使用仿真环境的mask处理（假设深度图是240x320）
-        depth_shape = (240, 320)  # 需要根据实际渲染尺寸调整
+        # 使用仿真环境的mask处理（使用高分辨率SAM mask）
+        depth_shape = (1080, 1920)  # 高分辨率SAM mask (height, width)
         filtered_pcd = get_objects_pcd_from_sam_mask_sim(pcd, mask, depth_shape)
 
         return filtered_pcd
@@ -227,6 +228,7 @@ class DemoGen:
             
             pcd_obj = self.get_objects_pcd_from_sam_mask(pcds[0], i, "object")
             pcd_tar = self.get_objects_pcd_from_sam_mask(pcds[0], i, "target")
+
             obj_bbox = self.pcd_bbox(pcd_obj)
             tar_bbox = self.pcd_bbox(pcd_tar)
 
@@ -246,8 +248,7 @@ class DemoGen:
                 trans_togo = obj_trans_vec.copy()
                 source_demo = self.replay_buffer.get_episode(i)
                 # 仿真数据：action保存的是绝对位置，而不是相对位移
-                # 原始代码: start_pos = source_demo["agent_pos"][0][:3] - source_demo["action"][0][:3]
-                start_pos = source_demo["action"][0][:3]  # home position (绝对位置)
+                start_pos = source_demo["agent_pos"][0][:3]  # home position (绝对位置)
                 end_pos = source_demo["agent_pos"][skill_1_frame-1][:3] + trans_togo
                 
                 if self.use_linear_interpolation:
@@ -257,19 +258,27 @@ class DemoGen:
                     step_actions = []
                     z_action = end_pos[2] - start_pos[2]
                     xy_action = end_pos[:2] - start_pos[:2]
-                    
+
                     if z_action != 0:
                         z_action = np.sign(z_action) * round(np.abs(z_action), 3)
-                        z_step_num = int(np.abs(z_action) / 0.015)
+                        # 【修复】限制Z轴占用不超过50%的帧数，根据帧数动态计算步长
+                        max_z_steps = int(skill_1_frame * 0.5)
+                        z_step_num = max_z_steps
+                        if z_step_num > 0:
+                            z_step_vector = np.array([0, 0, z_action / z_step_num])
+                        else:
+                            z_step_vector = np.array([0, 0, 0])
+
                         for _ in range(z_step_num):
-                            step_actions.append(np.array([0, 0, np.sign(z_action) * 0.015]))
+                            step_actions.append(z_step_vector)
                             xy_stage_frame -= 1
-                    
+
                     if xy_stage_frame > 0:
+                        # 根据剩余帧数动态计算XY步长
                         action = xy_action / xy_stage_frame
                         for _ in range(xy_stage_frame):
                             step_actions.append(np.array([*action, 0]))
-                            
+
                     # inverse the step_actions
                     step_actions = step_actions[::-1]
 
@@ -311,7 +320,9 @@ class DemoGen:
 
                     current_frame += 1
                 ############## stage {motion-1} ends #############
-                
+                # 【修复3】强制对齐：确保进入skill-1时，机器人平移量等于物体平移量
+                trans_sofar = obj_trans_vec.copy()
+
                 ############# stage {skill-1} starts #############
                 is_stage_motion2 = current_frame >= motion_2_frame
                 while not is_stage_motion2:
@@ -325,40 +336,59 @@ class DemoGen:
                     state[:3] += trans_sofar
                     traj_states.append(state)
 
+                    # Skill-1: 两部分分离（Target静止，Robot+Object移动）
                     source_pcd = source_demo["point_cloud"][current_frame].copy()
-                    pcd_tar, pcd_obj_robot = self.pcd_divide(source_pcd, [tar_bbox])
+                    pcd_tar, pcd_robot_obj = self.pcd_divide(source_pcd, [tar_bbox])
                     pcd_tar = self.pcd_translate(pcd_tar, tar_trans_vec)
-                    pcd_obj_robot = self.pcd_translate(pcd_obj_robot, trans_sofar)
-                    traj_pcds.append(np.concatenate([pcd_obj_robot, pcd_tar], axis=0))
+                    pcd_robot_obj = self.pcd_translate(pcd_robot_obj, trans_sofar)
+                    traj_pcds.append(np.concatenate([pcd_robot_obj, pcd_tar], axis=0))
 
                     current_frame += 1
                     is_stage_motion2 = current_frame >= motion_2_frame
                 ############## stage {skill-1} ends #############
 
                 ############# stage {motion-2} starts #############
-                trans_togo = tar_trans_vec - obj_trans_vec
-                start_pos = source_demo["agent_pos"][motion_2_frame][:3] - source_demo["action"][motion_2_frame][:3]
-                end_pos = source_demo["agent_pos"][skill_2_frame-1][:3] + trans_togo
+                # 仿真数据：action保存的是绝对位置，而不是相对位移
+                # 【修复2】统一坐标系：start_pos和end_pos都使用agent_pos
+                # start_pos: 物体被抓取后，位于平移后的物体位置（+obj_trans_vec）
+                # end_pos: 携带物体移动到平移后的目标位置（+tar_trans_vec）
+                start_pos = source_demo["agent_pos"][motion_2_frame][:3] + obj_trans_vec
+                end_pos = source_demo["agent_pos"][skill_2_frame-1][:3] + tar_trans_vec
                 
                 if self.use_linear_interpolation:
                     step_action = (end_pos - start_pos) / (skill_2_frame - motion_2_frame)
                 else:
-                    xy_stage_frame = skill_2_frame - motion_2_frame
+                    z_stage_frame = skill_2_frame - motion_2_frame
                     step_actions = []
                     z_action = end_pos[2] - start_pos[2]
                     xy_action = end_pos[:2] - start_pos[:2]
-                    
-                    if z_action != 0:
-                        z_action = np.sign(z_action) * round(np.abs(z_action), 3)
-                        z_step_num = int(np.abs(z_action) / 0.015)
+
+                    # Motion-2: 先 XY，再 Z（与 Motion-1 相反）
+                    if xy_action[0] != 0 or xy_action[1] != 0:
+                        xy_action = np.sign(xy_action) * np.round(np.abs(xy_action), 3)
+                        # 【修复】限制XY占用不超过50%的帧数，根据帧数动态计算步长
+                        max_xy_steps = int((skill_2_frame - motion_2_frame) * 0.5)
+                        xy_step_num = max_xy_steps
+                        if xy_step_num > 0:
+                            xy_step_vector = np.array([xy_action[0] / xy_step_num, xy_action[1] / xy_step_num, 0])
+                        else:
+                            xy_step_vector = np.array([0, 0, 0])
+
+                        for _ in range(xy_step_num):
+                            step_actions.append(xy_step_vector)
+                            z_stage_frame -= 1
+
+                    if z_stage_frame > 0:
+                        # 【修复】根据剩余帧数动态计算Z轴步长，确保填满所有帧
+                        z_step_num = z_stage_frame
+                        if z_action != 0:
+                            z_action = np.sign(z_action) * round(np.abs(z_action), 3)
+                            z_step_vector = np.array([0, 0, z_action / z_step_num])
+                        else:
+                            z_step_vector = np.array([0, 0, 0])
+
                         for _ in range(z_step_num):
-                            step_actions.append(np.array([0, 0, np.sign(z_action) * 0.015]))
-                            xy_stage_frame -= 1
-                    
-                    if xy_stage_frame > 0:
-                        action = xy_action / xy_stage_frame
-                        for _ in range(xy_stage_frame):
-                            step_actions.append(np.array([*action, 0]))
+                            step_actions.append(z_step_vector)
 
                 # 初始化当前的插值位置为起始位置
                 curr_interp_pos = start_pos.copy()
@@ -396,15 +426,34 @@ class DemoGen:
 
                     current_frame += 1
                 ############## stage {motion-2} ends #############
-                    
+                # 【修复3】强制对齐：确保进入skill-2时，机器人平移量等于目标平移量
+                trans_sofar = tar_trans_vec.copy()
+
                 ############# stage {skill-2} starts #############
-                later_frames = self.translate_all_frames(source_demo, tar_trans_vec, current_frame)
+                num_frames = source_demo["agent_pos"].shape[0]
+                while current_frame < num_frames:
+                    action = source_demo["action"][current_frame].copy()
+                    # 【关键修复】skill阶段的action也需要平移，使其与平移后的目标位置对齐
+                    action[:3] += trans_sofar
+                    traj_actions.append(action)
+
+                    # "state" and "point_cloud" consider the accumulated translation
+                    state = source_demo["agent_pos"][current_frame].copy()
+                    state[:3] += trans_sofar
+                    traj_states.append(state)
+
+                    # 【修复】skill阶段整体平移，不分割（避免bbox重叠问题）
+                    source_pcd = source_demo["point_cloud"][current_frame].copy()
+                    translated_pcd = self.pcd_translate(source_pcd, trans_sofar)
+                    traj_pcds.append(translated_pcd)
+
+                    current_frame += 1
                 ############# stage {skill-2} ends #############
 
                 generated_episode = {
-                    "state": np.concatenate([traj_states, later_frames["state"]], axis=0) if len(traj_states) > 0 else later_frames["state"],
-                    "action": np.concatenate([traj_actions, later_frames["action"]], axis=0) if len(traj_actions) > 0 else later_frames["action"],
-                    "point_cloud": np.concatenate([traj_pcds, later_frames["point_cloud"]], axis=0) if len(traj_pcds) > 0 else later_frames["point_cloud"]
+                    "state": traj_states,
+                    "action": traj_actions,
+                    "point_cloud": traj_pcds
                 }
                 generated_episodes.append(generated_episode)
 
@@ -496,23 +545,20 @@ class DemoGen:
 
                     if z_action != 0:
                         z_action = np.sign(z_action) * round(np.abs(z_action), 3)
-                        z_step_num = int(np.abs(z_action) / 0.015)
-                        # 【修复1】限制Z轴步数不超过总帧数的50%，避免占用所有帧导致XY无法移动
+                        # 【修复】限制Z轴占用不超过50%的帧数，根据帧数动态计算步长
                         max_z_steps = int(skill_1_frame * 0.5)
-                        if z_step_num > max_z_steps:
-                            z_step_num = max_z_steps
-                            if z_step_num > 0:
-                                z_step_vector = np.array([0, 0, (end_pos[2] - start_pos[2]) / z_step_num])
-                            else:
-                                z_step_vector = np.array([0, 0, 0])
+                        z_step_num = max_z_steps
+                        if z_step_num > 0:
+                            z_step_vector = np.array([0, 0, z_action / z_step_num])
                         else:
-                            z_step_vector = np.array([0, 0, np.sign(z_action) * 0.015])
+                            z_step_vector = np.array([0, 0, 0])
 
                         for _ in range(z_step_num):
                             step_actions.append(z_step_vector)
                             xy_stage_frame -= 1
 
                     if xy_stage_frame > 0:
+                        # 根据剩余帧数动态计算XY步长
                         action = xy_action / xy_stage_frame
                         for _ in range(xy_stage_frame):
                             step_actions.append(np.array([*action, 0]))
@@ -744,7 +790,7 @@ class DemoGen:
         """
         masks = []
         selected_pcds = []
-        for bbox in bbox_list:
+        for idx, bbox in enumerate(bbox_list):
             assert np.array(bbox).shape == (2, 3)
             masks.append(np.all(pcd[:, :3] > bbox[0], axis=1) & np.all(pcd[:, :3] < bbox[1], axis=1))
         # add the rest of the points to the last mask

@@ -30,7 +30,7 @@
     <light diffuse=".8 .8 .8" dir="0 -.15 -1" directional="false" pos="-3. -3. 8.0" specular="0.3 0.3 0.3" castshadow="false"/>
 
     <!-- 机械臂正前方相机 - 用于 DemoGen 点云采集 -->
-    <camera mode="fixed" name="demogen_camera" pos="1.0 0 0.7" quat="0.56 0.43 0.43 0.56" fovy="45"/>
+    <camera mode="fixed" name="demogen_camera" pos="0.9 0 0.7" quat="0.56 0.43 0.43 0.56" fovy="60"/>
 
     <body name="table" pos="1.0 0.3 0.0">
         <include file="objects/table/table.xml"/>
@@ -38,3 +38,4 @@
 
   </worldbody>
 </mujoco>
+
