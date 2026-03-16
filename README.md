@@ -138,7 +138,8 @@ python robopal/robopal/demos/demo_keyboard_teleop.py
 - 按 `ESC` 退出
 
 注：
-    修改demo_keyboard_teleop.py脚本336行，sam_mask_dir = "path/to/your/dir",生成第一帧图片
+    修改demo_keyboard_teleop.py脚本336行，sam_mask_dir = "path/to/your/dir",生成第一帧图片;
+  
     需要将遥操采集的pickle文件复制在/Demogen-simulation/DemoGen-master/data/source_demos/<任务名>下，再执行步骤2
 
 ### 步骤 2: 格式转换为 Zarr
