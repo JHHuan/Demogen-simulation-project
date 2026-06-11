@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 ################################# Camera Calibration ##############################################
-# MuJoCo仿真中的相机配置 (来自 grasping_demogen.xml)
+# MuJoCo仿真中的相机配置 (来自 grasping_demogen.xml / pick_single_cube.xml)
 # <camera mode="fixed" name="demogen_camera" pos="1.0 0 0.7" quat="0.56 0.43 0.43 0.56" fovy="45"/>
 
 # 机器人坐标系到相机坐标系的变换
@@ -14,9 +14,9 @@ from scipy.spatial.transform import Rotation as R
 # 但是为了保持与DemoGen的兼容性，我们需要提供等效的参数
 
 # 相机位置（世界坐标系）
-# pos="1.0 0 0.7" 表示相机在机器人基座前方1.0m，高度0.7m
+# pos="1.5 0 0.7" 表示相机在机器人基座前方1.5m，高度0.7m
 # 机器人基座通常在原点 (0, 0, 0)
-CAMERA_POS = np.array([1.0, 0.0, 0.7])
+CAMERA_POS = np.array([1.5, 0.0, 0.8])
 
 # 相机姿态（四元数 [w, x, y, z]）
 # quat="0.56 0.43 0.43 0.56" 表示相机朝向机器人基座
@@ -55,13 +55,14 @@ T_link2viz = np.array([[0, 0, 1, 0],
 # 工作空间边界（用于裁剪点云）
 # 根据仿真环境中的物体位置设置
 WORK_SPACE = [
-    [0.2, 0.8],   # X范围（机器人前方）
-    [-0.3, 0.3],  # Y范围（左右）
-    [0.42, 0.7]   # Z范围（高度，桌子表面0.423m）
+    [0.12, 0.8],   # X范围（机器人前方）
+    [-0.5, 0.5],  # Y范围（左右）
+    [0.425, 0.7]   # Z范围（高度，桌子表面0.423m）
 ]
 
 # 点云处理参数（与真实环境保持一致）
 RESCALE_FACTOR = 1.0  # 深度缩放因子
+CAMERA_FOVY = 45  # 相机垂直FOV（度）
 
 print("="*60)
 print("仿真环境相机参数")
@@ -69,7 +70,7 @@ print("="*60)
 print(f"CAMERA_POS: {CAMERA_POS}")
 print(f"CAMERA_QUAT (MuJoCo): {CAMERA_QUAT}")
 print(f"CAMERA_QUAT (scipy): {CAMERA_QUAT_SCIPY}")
-print(f"MuJoCo fovy: 45 degrees")
+print(f"MuJoCo fovy: {CAMERA_FOVY} degrees")
 print(f"工作空间: {WORK_SPACE}")
 print("="*60)
 ###################################################################################################

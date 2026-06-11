@@ -1,0 +1,229 @@
+<mujoco model="O6 dexterous hand">
+  <compiler angle="radian" autolimits="true"/>
+
+  <option integrator="implicitfast"/>
+
+  <default>
+    <default class="o6_hand">
+      <material specular="0.5" shininess="0.25"/>
+      <joint damping="0.5" armature="0.1"/>
+      <general dyntype="none" biastype="affine"/>
+
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom type="mesh" group="4" conaffinity="1" contype="1" condim="4" friction="1 1 1"/>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <material class="o6_hand" name="skin_color" rgba="1 0.6 0 1"/>
+    <material class="o6_hand" name="bone_color" rgba="0.164706 0.282353 0.443137 1"/>
+    <material class="o6_hand" name="finger_color" rgba="0.980392 0.780392 0.627451 1"/>
+
+    <!-- Hand meshes -->
+    <mesh name="hand_base_link" file="meshes/hand_base_link.STL"/>
+    <mesh name="thumb_metacarpals_base2" file="meshes/thumb_metacarpals_base2.STL"/>
+    <mesh name="thumb_metacarpals" file="meshes/thumb_metacarpals.STL"/>
+    <mesh name="thumb_distal" file="meshes/thumb_distal.STL"/>
+    <mesh name="index_proximal" file="meshes/index_proximal.STL"/>
+    <mesh name="index_distal" file="meshes/index_distal.STL"/>
+    <mesh name="middle_proximal" file="meshes/middle_proximal.STL"/>
+    <mesh name="middle_distal" file="meshes/middle_distal.STL"/>
+    <mesh name="ring_proximal" file="meshes/ring_proximal.STL"/>
+    <mesh name="ring_distal" file="meshes/ring_distal.STL"/>
+    <mesh name="pinky_proximal" file="meshes/pinky_proximal.STL"/>
+    <mesh name="pinky_distal" file="meshes/pinky_distal.STL"/>
+  </asset>
+
+  <worldbody>
+    <body name="hand" pos="0 0 0" quat="1 0 0 1">
+      <inertial pos="-0.00160321 0.000358463 0.0538003" quat="0.999267 -0.0369342 -0.00667783 0.00753493"
+                mass="0.0674008" diaginertia="5.22457e-05 3.34005e-05 2.27714e-05"/>
+      <geom type="mesh" material="skin_color" class="collision" mesh="hand_base_link"/>
+      <geom type="mesh" material="skin_color" class="visual" mesh="hand_base_link"/>
+
+      <!-- End effector site for grasping -->
+      <body name="eef" pos="0 0 0.11">
+        <site name="grip_site" pos="0 0 0" size="0.005" rgba="1 0 0 0" type="sphere"/>
+        <site name="ee_x" pos="0.1 0 0" size="0.003 .1" quat="0.707105 0 0 0.707108" rgba="1 0 0 0.3" type="cylinder"/>
+        <site name="ee_y" pos="0 0.1 0" size="0.003 .1" quat="0.707105 0.707108 0 0" rgba="0 1 0 0.3" type="cylinder"/>
+        <site name="ee_z" pos="0 0 0.1" size="0.003 .1" quat="1 0 0 0" rgba="0 0 1 0.3" type="cylinder"/>
+      </body>
+
+      <!-- Thumb (3 joints) -->
+      <body name="thumb_metacarpals_base2" pos="0.011508 0.022975 0.032794">
+        <inertial pos="0.00162796 0.00276672 -0.00184228" quat="0.958658 0.114191 -0.0354615 -0.258221"
+                  mass="0.00138591" diaginertia="5.49427e-08 4.70357e-08 2.7769e-08"/>
+        <joint name="thumb_cmc_yaw" class="o6_hand" axis="0 0 -1" range="0 1.54"/>
+        <geom type="mesh" material="bone_color" class="collision" mesh="thumb_metacarpals_base2"/>
+        <geom type="mesh" material="bone_color" class="visual" mesh="thumb_metacarpals_base2"/>
+
+        <body name="thumb_metacarpals" pos="0.0061649 0.010678 -0.004891" quat="0.4192 -0.472029 -0.272524 -0.726079">
+          <inertial pos="4.24921e-05 -1.67886e-05 0.0228342" quat="0.687228 -0.164922 -0.164643 0.688049"
+                    mass="0.0123382" diaginertia="1.76758e-06 1.16101e-06 8.78264e-07"/>
+          <joint name="thumb_cmc_pitch" class="o6_hand" axis="0 1 0" range="0 0.52"/>
+          <geom type="mesh" material="skin_color" class="collision" mesh="thumb_metacarpals"/>
+          <geom type="mesh" material="skin_color" class="visual" mesh="thumb_metacarpals"/>
+
+          <body name="thumb_distal" pos="0.0037776 0 0.045368">
+            <inertial pos="-0.00413691 -4.54843e-07 0.0230097" quat="0.999397 9.12706e-06 -0.0347342 -8.13325e-06"
+                      mass="0.00763303" diaginertia="1.31047e-06 1.22457e-06 2.72295e-07"/>
+            <joint name="thumb_ip" class="o6_hand" axis="0 1 0" range="0 0.96"/>
+            <geom type="mesh" material="finger_color" class="collision" mesh="thumb_distal"/>
+            <geom type="mesh" material="finger_color" class="visual" mesh="thumb_distal"/>
+            <site name="thumb_tip" pos="-0.002 0 0.044" size="0.003" rgba="1 0 0 0" type="sphere"/>
+          </body>
+        </body>
+      </body>
+
+      <!-- Index finger (2 joints) -->
+      <body name="index_proximal" pos="0.0024758 0.02419 0.098779" quat="0.999657 -0.026177 0 0">
+        <inertial pos="-0.00208666 -4.8965e-06 0.0172737" quat="0.993795 0.000369213 -0.111225 0.0007939"
+                  mass="0.00253179" diaginertia="2.75761e-07 2.72916e-07 7.58316e-08"/>
+        <joint name="index_mcp_pitch" class="o6_hand" axis="0 1 0" range="0 1.57"/>
+        <geom type="mesh" material="finger_color" class="collision" mesh="index_proximal"/>
+        <geom type="mesh" material="finger_color" class="visual" mesh="index_proximal"/>
+
+        <body name="index_distal" pos="-0.0052516 0 0.036625">
+          <inertial pos="0.0065894 -4.59977e-06 0.0194434" quat="0.97709 0.000756952 0.212768 0.00487986"
+                    mass="0.00376787" diaginertia="3.74403e-07 3.65131e-07 7.19711e-08"/>
+          <joint name="index_dip" class="o6_hand" axis="0 1 0" range="0 1.4"/>
+          <geom type="mesh" material="bone_color" class="collision" mesh="index_distal"/>
+          <geom type="mesh" material="bone_color" class="visual" mesh="index_distal"/>
+          <site name="index_tip" pos="0.016 0 0.035" size="0.003" rgba="0 1 0 0" type="sphere"/>
+        </body>
+      </body>
+
+      <!-- Middle finger (2 joints) -->
+      <body name="middle_proximal" pos="0.00052576 0.00634 0.1027">
+        <inertial pos="-0.00208661 -4.93452e-06 0.0172737" quat="0.993795 0.000375852 -0.111225 0.000731327"
+                  mass="0.00253175" diaginertia="2.75761e-07 2.72915e-07 7.58309e-08"/>
+        <joint name="middle_mcp_pitch" class="o6_hand" axis="0 1 0" range="0 1.57"/>
+        <geom type="mesh" material="bone_color" class="collision" mesh="middle_proximal"/>
+        <geom type="mesh" material="bone_color" class="visual" mesh="middle_proximal"/>
+
+        <body name="middle_distal" pos="-0.0052516 0 0.036625">
+          <inertial pos="0.0065894 -4.58857e-06 0.0194435" quat="0.97709 0.000755208 0.212768 0.00486939"
+                    mass="0.00376786" diaginertia="3.74402e-07 3.6513e-07 7.19708e-08"/>
+          <joint name="middle_dip" class="o6_hand" axis="0 1 0" range="0 1.4"/>
+          <geom type="mesh" material="bone_color" class="collision" mesh="middle_distal"/>
+          <geom type="mesh" material="bone_color" class="visual" mesh="middle_distal"/>
+          <site name="middle_tip" pos="0.016 0 0.035" size="0.003" rgba="0 0 1 0" type="sphere"/>
+        </body>
+      </body>
+
+      <!-- Ring finger (2 joints) -->
+      <body name="ring_proximal" pos="0.0010258 -0.011135 0.098767" quat="0.999657 0.026177 0 0">
+        <inertial pos="-0.00208654 -4.98539e-06 0.0172737" quat="0.993795 0.000384813 -0.111226 0.000649851"
+                  mass="0.00253171" diaginertia="2.7576e-07 2.72915e-07 7.58301e-08"/>
+        <joint name="ring_mcp_pitch" class="o6_hand" axis="0 1 0" range="0 1.57"/>
+        <geom type="mesh" material="finger_color" class="collision" mesh="ring_proximal"/>
+        <geom type="mesh" material="finger_color" class="visual" mesh="ring_proximal"/>
+
+        <body name="ring_distal" pos="-0.0052516 0 0.036625">
+          <inertial pos="0.0065894 -4.56629e-06 0.0194435" quat="0.97709 0.000751861 0.21277 0.00484872"
+                    mass="0.00376784" diaginertia="3.744e-07 3.65127e-07 7.197e-08"/>
+          <joint name="ring_dip" class="o6_hand" axis="0 1 0" range="0 1.4"/>
+          <geom type="mesh" material="bone_color" class="collision" mesh="ring_distal"/>
+          <geom type="mesh" material="bone_color" class="visual" mesh="ring_distal"/>
+          <site name="ring_tip" pos="0.016 0 0.035" size="0.003" rgba="1 1 0 0" type="sphere"/>
+        </body>
+      </body>
+
+      <!-- Pinky finger (2 joints) -->
+      <body name="pinky_proximal" pos="0.0024758 -0.028372 0.092741" quat="0.999048 0.0436192 0 0">
+        <inertial pos="-0.00208649 -5.02315e-06 0.0172737" quat="0.993795 0.0003914 -0.111226 0.000590247"
+                  mass="0.00253167" diaginertia="2.7576e-07 2.72914e-07 7.58294e-08"/>
+        <joint name="pinky_mcp_pitch" class="o6_hand" axis="0 1 0" range="0 1.57"/>
+        <geom type="mesh" material="finger_color" class="collision" mesh="pinky_proximal"/>
+        <geom type="mesh" material="finger_color" class="visual" mesh="pinky_proximal"/>
+
+        <body name="pinky_distal" pos="-0.0052516 0 0.036625">
+          <inertial pos="0.0065894 -4.55268e-06 0.0194435" quat="0.97709 0.000749893 0.21277 0.00483566"
+                    mass="0.00376783" diaginertia="3.74398e-07 3.65126e-07 7.19694e-08"/>
+          <joint name="pinky_dip" class="o6_hand" axis="0 1 0" range="0 1.4"/>
+          <geom type="mesh" material="bone_color" class="collision" mesh="pinky_distal"/>
+          <geom type="mesh" material="bone_color" class="visual" mesh="pinky_distal"/>
+          <site name="pinky_tip" pos="0.016 0 0.035" size="0.003" rgba="1 0 1 0" type="sphere"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <contact>
+    <!-- Exclude self-collision between finger phalanges -->
+    <exclude body1="hand" body2="thumb_metacarpals_base2"/>
+    <exclude body1="hand" body2="thumb_metacarpals"/>
+    <exclude body1="hand" body2="thumb_distal"/>
+    <exclude body1="hand" body2="index_proximal"/>
+    <exclude body1="hand" body2="index_distal"/>
+    <exclude body1="hand" body2="middle_proximal"/>
+    <exclude body1="hand" body2="middle_distal"/>
+    <exclude body1="hand" body2="ring_proximal"/>
+    <exclude body1="hand" body2="ring_distal"/>
+    <exclude body1="hand" body2="pinky_proximal"/>
+    <exclude body1="hand" body2="pinky_distal"/>
+
+    <!-- Exclude collision between adjacent fingers -->
+    <exclude body1="thumb_distal" body2="index_distal"/>
+    <exclude body1="index_distal" body2="middle_distal"/>
+    <exclude body1="middle_distal" body2="ring_distal"/>
+    <exclude body1="ring_distal" body2="pinky_distal"/>
+  </contact>
+
+  <tendon>
+    <!-- Coupling tendons for finger joints -->
+    <fixed name="index_coupling">
+      <joint joint="index_mcp_pitch" coef="0.67"/>
+      <joint joint="index_dip" coef="-1"/>
+    </fixed>
+    <fixed name="middle_coupling">
+      <joint joint="middle_mcp_pitch" coef="0.67"/>
+      <joint joint="middle_dip" coef="-1"/>
+    </fixed>
+    <fixed name="ring_coupling">
+      <joint joint="ring_mcp_pitch" coef="0.67"/>
+      <joint joint="ring_dip" coef="-1"/>
+    </fixed>
+    <fixed name="pinky_coupling">
+      <joint joint="pinky_mcp_pitch" coef="0.67"/>
+      <joint joint="pinky_dip" coef="-1"/>
+    </fixed>
+    <fixed name="thumb_coupling">
+      <joint joint="thumb_cmc_pitch" coef="0.8"/>
+      <joint joint="thumb_ip" coef="-1"/>
+    </fixed>
+  </tendon>
+
+  <equality>
+    <!-- Finger joint coupling: distal follows proximal with ratio -->
+    <!-- Index: DIP = 0.67 * MCP -->
+    <joint joint1="index_mcp_pitch" joint2="index_dip" solref="0.005 1" solimp="0.95 0.99 0.001"/>
+
+    <!-- Middle: DIP = 0.67 * MCP -->
+    <joint joint1="middle_mcp_pitch" joint2="middle_dip" solref="0.005 1" solimp="0.95 0.99 0.001"/>
+
+    <!-- Ring: DIP = 0.67 * MCP -->
+    <joint joint1="ring_mcp_pitch" joint2="ring_dip" solref="0.005 1" solimp="0.95 0.99 0.001"/>
+
+    <!-- Pinky: DIP = 0.67 * MCP -->
+    <joint joint1="pinky_mcp_pitch" joint2="pinky_dip" solref="0.005 1" solimp="0.95 0.99 0.001"/>
+
+    <!-- Thumb: IP = 0.8 * MCP_pitch -->
+    <joint joint1="thumb_cmc_pitch" joint2="thumb_ip" solref="0.005 1" solimp="0.95 0.99 0.001"/>
+  </equality>
+
+  <actuator>
+    <!-- 6 degrees of freedom: thumb (2) + 4 fingers (1 each) -->
+    <!-- 使用位置控制器而不是电机，可以直接设置关节角度 -->
+    <position name="actuator_thumb_cmc_yaw"    joint="thumb_cmc_yaw"    kp="100" kv="10" ctrllimited="true" ctrlrange="0 1.54"/>
+    <position name="actuator_thumb_cmc_pitch"  joint="thumb_cmc_pitch"  kp="100" kv="10" ctrllimited="true" ctrlrange="0 0.52"/>
+    <position name="actuator_index_mcp"        joint="index_mcp_pitch" kp="100" kv="10" ctrllimited="true" ctrlrange="0 1.57"/>
+    <position name="actuator_middle_mcp"       joint="middle_mcp_pitch" kp="100" kv="10" ctrllimited="true" ctrlrange="0 1.57"/>
+    <position name="actuator_ring_mcp"         joint="ring_mcp_pitch"   kp="100" kv="10" ctrllimited="true" ctrlrange="0 1.57"/>
+    <position name="actuator_pinky_mcp"        joint="pinky_mcp_pitch"  kp="100" kv="10" ctrllimited="true" ctrlrange="0 1.57"/>
+  </actuator>
+</mujoco>

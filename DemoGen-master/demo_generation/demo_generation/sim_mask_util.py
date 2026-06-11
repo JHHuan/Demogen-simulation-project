@@ -4,6 +4,7 @@
 """
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+from demo_generation.sim_camera import CAMERA_POS, CAMERA_QUAT_SCIPY, CAMERA_FOVY
 
 
 def get_camera_intrinsics(height, width, fovy_deg):
@@ -27,7 +28,7 @@ def get_camera_intrinsics(height, width, fovy_deg):
 
 def project_points_to_image(points_3d, K, image_size):
     """
-    将3D点投影到2D图像
+    将3D点投影到2D图像（与demo_keyboard_teleop.py中的点云生成逻辑一致）
 
     Args:
         points_3d: (N, 3) 世界坐标系中的点
@@ -37,26 +38,35 @@ def project_points_to_image(points_3d, K, image_size):
     Returns:
         pixel_coords: (N, 2) 像素坐标
     """
-    # 简化：对于仿真环境，点云已经在世界坐标系
-    # 我们需要将世界坐标转换到相机坐标
-
-    # 相机参数（从grasping_demogen.xml）
-    camera_pos = np.array([1.0, 0.0, 0.7])
-    camera_quat = np.array([0.56, 0.43, 0.43, 0.56])  # [w, x, y, z]
-
-    # 转换为scipy格式
-    camera_quat_scipy = np.array([0.43, 0.43, 0.56, 0.56])  # [x, y, z, w]
+    # 相机参数
+    camera_pos = CAMERA_POS
+    camera_quat_scipy = CAMERA_QUAT_SCIPY
     cam_rot = R.from_quat(camera_quat_scipy).as_matrix()
 
-    # 世界坐标 -> 相机坐标
-    points_cam = (points_3d - camera_pos) @ cam_rot.T
+    # 与点云生成相反的变换：
+    # 点云生成: points_cam -> rot_x_180 -> cam_rot -> +cam_pos -> world
+    # 反向投影: world -> -cam_pos -> cam_rot^T -> rot_x_180^T -> points_cam
 
-    # 投影到图像平面
+    # 1. 世界坐标 -> 相机坐标系（减去位置，逆旋转）
+    points_rel = points_3d - camera_pos
+    points_cam = (points_rel @ cam_rot)  # 不转置，因为要逆向
+
+    # 2. 应用 rot_x_180 的逆（与点云生成一致）
+    # 点云生成中: points_cam_aligned = points_cam @ rot_x_180.T
+    # 所以这里需要: points_cam_orig = points_cam @ rot_x_180
+    rot_x_180 = np.array([
+        [1, 0, 0],
+        [0, -1, 0],
+        [0, 0, -1]
+    ])
+    points_cam_aligned = points_cam @ rot_x_180
+
+    # 3. 投影到图像平面
     fx, fy = K[0, 0], K[1, 1]
     cx, cy = K[0, 2], K[1, 2]
 
-    x_proj = fx * points_cam[:, 0] / points_cam[:, 2] + cx
-    y_proj = fy * points_cam[:, 1] / points_cam[:, 2] + cy
+    x_proj = fx * points_cam_aligned[:, 0] / points_cam_aligned[:, 2] + cx
+    y_proj = fy * points_cam_aligned[:, 1] / points_cam_aligned[:, 2] + cy
 
     pixel_coords = np.stack([x_proj, y_proj], axis=1)
 
@@ -119,14 +129,13 @@ def get_objects_pcd_from_sam_mask_sim(point_cloud_robot, mask, depth_shape=(240,
     points_rgb = point_cloud_robot[:, 3:]
 
     # 获取相机内参
-    K = get_camera_intrinsics(depth_shape[0], depth_shape[1], fovy_deg=45)
+    K = get_camera_intrinsics(depth_shape[0], depth_shape[1], fovy_deg=CAMERA_FOVY)
     image_size = depth_shape
 
     # 用mask过滤点
     filtered_xyz = filter_points_by_mask(points_xyz, mask, K, image_size)
 
     if len(filtered_xyz) == 0:
-        print(f"警告：mask过滤后没有点！点云范围: {np.min(points_xyz, axis=0)} ~ {np.max(points_xyz, axis=0)}")
         return point_cloud_robot  # 返回原始点云
 
     # 找到对应的RGB值
@@ -151,9 +160,6 @@ def get_objects_pcd_from_sam_mask_sim(point_cloud_robot, mask, depth_shape=(240,
     # 合并XYZ和RGB
     filtered_pcd = np.concatenate([filtered_xyz, filtered_rgb], axis=1)
 
-    print(f"原始点云: {len(points_xyz)} 点")
-    print(f"过滤后点云: {len(filtered_xyz)} 点")
-
     return filtered_pcd
 
 
@@ -163,6 +169,6 @@ if __name__ == "__main__":
 
     # 测试投影
     test_points = np.array([[0.3, 0.0, 0.45]])  # 工作空间中心附近
-    K = get_camera_intrinsics(240, 320, 45)
+    K = get_camera_intrinsics(240, 320, CAMERA_FOVY)
     pixel_coords = project_points_to_image(test_points, K, (240, 320))
     print(f"测试点投影: {pixel_coords}")

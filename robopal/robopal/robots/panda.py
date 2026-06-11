@@ -97,8 +97,154 @@ class PandaDemoGen(Panda):
         # 添加可操作的物体
         self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/cube/green_cube.xml')
 
+        # 添加红色立方体
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/red_cube/body.xml')
+
     @property
     def init_qpos(self):
         """Robot's init joint position."""
         return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
 
+
+class PandaSingleCube(Panda):
+    """Panda robot with single cube for pick-and-place task."""
+
+    def __init__(self):
+        super().__init__(
+            scene='pick_single_cube',  # 使用新的单立方体场景
+            gripper='PandaHand',
+            mount='top_point'
+        )
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        # 只添加绿色立方体（单物体抓取任务）
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/cube/green_cube.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
+
+
+class PandaWithO6Hand(Panda):
+    """Panda robot equipped with O6 dexterous hand (6 DOF)."""
+
+    def __init__(self):
+        super().__init__(
+            scene='grasping_demogen',
+            gripper='O6Hand',
+            mount='top_point'
+        )
+        # O6Hand的末端执行器名称
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        """Add objects for manipulation tasks."""
+        # 添加可操作的物体
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/metaworld_box/metaworld_box.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
+
+class PandaSingleCube1(Panda):
+    """Panda robot with single cube for pick-and-place task."""
+
+    def __init__(self):
+        super().__init__(
+            scene='pick_single_cube_1',  # 使用新的单立方体场景
+            gripper='PandaHand',
+            mount='top_point'
+        )
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        # 只添加绿色立方体（单物体抓取任务）
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/cube/green_cube_1.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
+
+
+class PandaSingleCube2cam(Panda):
+    """Panda robot with single cube, dual camera (front-left/right 45°)."""
+
+    def __init__(self):
+        super().__init__(
+            scene='pick_single_cube_2cam',
+            gripper='PandaHand',
+            mount='top_point'
+        )
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/cube/green_cube_1.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
+
+
+class PandaSingleCube3cam(Panda):
+    """Panda robot with single cube, three cameras (front + left/right 45°)."""
+
+    def __init__(self):
+        super().__init__(
+            scene='pick_single_cube_3cam',
+            gripper='PandaHand',
+            mount='top_point'
+        )
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/cube/green_cube_1.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
+
+
+class PandaButtonBox3cam(Panda):
+    """Panda robot with buttonbox (press button task), three cameras."""
+
+    def __init__(self):
+        super().__init__(
+            scene='press_button_3cam',
+            gripper='PandaHand',
+            mount='top_point'
+        )
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/buttonbox/buttonbox.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}
+
+
+class PandaAssembly3cam(Panda):
+    """Panda robot with assembly objects (round nut + peg), three cameras."""
+
+    def __init__(self):
+        super().__init__(
+            scene='assembly_3cam',
+            gripper='PandaHand',
+            mount='top_point'
+        )
+        self.end_name = {self.agents[0]: '0_eef'}
+
+    def add_assets(self):
+        self.mjcf_generator.add_node_from_xml(ASSET_DIR + '/objects/assembly/assembly.xml')
+
+    @property
+    def init_qpos(self):
+        """Robot's init joint position."""
+        return {self.agents[0]: np.array([-0.61, -0.84, 0.47, -2.54, 0.35, 1.75, 0.44])}

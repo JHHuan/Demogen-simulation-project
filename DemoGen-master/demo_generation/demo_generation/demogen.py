@@ -747,18 +747,14 @@ class DemoGen:
             color = points[:, 3:] / 255
             ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=color, marker='.')
 
-            ax.set_box_aspect([1.6, 2.2, 1])
-            # ax.set_box_aspect([1.6, 1.6, 1])
-            # ax.set_aspect('equal')
-            ax.set_xlim(0.1, 0.8)
-            ax.set_ylim(-0.4, 0.6)
-            # ax.set_ylim(-0.3, 0.4)
-            ax.set_zlim(0.1, 0.4)
+            ax.set_box_aspect([1.7, 2.2, 1])
+            ax.set_xlim(0.1, 0.85)
+            ax.set_ylim(-0.5, 0.5)
+            ax.set_zlim(0.3, 0.75)
 
             x_ticks = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-            y_ticks = [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-            # y_ticks = [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4]
-            z_ticks = [0.1, 0.2, 0.3, 0.4]
+            y_ticks = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
+            z_ticks = [0.3, 0.4, 0.5, 0.6, 0.7]
             ax.tick_params(axis='both', which='major', labelsize=8)
             ax.xaxis.set_major_locator(FixedLocator(x_ticks))
             ax.yaxis.set_major_locator(FixedLocator(y_ticks))

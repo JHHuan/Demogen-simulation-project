@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<mujoco model="metaworld_box">
+  <compiler angle="radian" meshdir="meshes" autolimits="true"/>
+
+  <asset>
+    <!-- Box meshes -->
+    <mesh name="box_bin" file="objects/meshes/bin.stl" scale="0.8 0.8 0.8"/>
+    <mesh name="box_top" file="objects/metaworld_box/meshes/boxtop.stl" scale="0.8 0.8 0.8"/>
+    <mesh name="box_handle" file="objects/metaworld_box/meshes/boxhandle.stl" scale="0.8 0.8 0.8"/>
+  </asset>
+
+  <default>
+    <default class="box">
+      <geom type="mesh" contype="1" conaffinity="1" condim="3" friction="0.5 0.005 0.0001"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <!-- Box base (free movable) -->
+    <body name="box_base" pos="0.41 0.11 0.46">
+      <freejoint name="box_base_joint"/>
+      <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01"/>
+
+
+      <!-- Box container collision (simplified box walls) -->
+      <geom name="box_bottom" type="box" size="0.08 0.08 0.004" pos="0 0 0.004" class="box"/>
+      <geom name="box_front" type="box" size="0.08 0.004 0.024" pos="0 -0.076 0.024" class="box"/>
+      <geom name="box_back" type="box" size="0.08 0.004 0.024" pos="0 0.076 0.024" class="box"/>
+      <geom name="box_left" type="box" size="0.004 0.072 0.024" pos="-0.076 0 0.024" class="box"/>
+      <geom name="box_right" type="box" size="0.004 0.072 0.024" pos="0.076 0 0.024" class="box"/>
+    </body>
+
+    <!-- Box top (graspable with free joint) -->
+    <body name="box_top" pos="0.34 -0.17 0.46" euler="0 0 1.5708">
+      <freejoint name="box_top_joint"/>
+      <inertial mass="0.1" pos="0 0 0" diaginertia="0.001 0.001 0.001"/>
+
+
+      <!-- Top collision (完整环形把手) -->
+      <!-- 盖子主体 -->
+      <geom name="box_top_col1" type="box" size="0.08 0.08 0.0024" pos="0 0 0.0024" class="box"/>
+      <!-- 左边 -->
+      <geom name="box_top_col2" type="box" size="0.004 0.08 0.0064" pos="-0.076 0 -0.0064" class="box"/>
+      <!-- 右边 -->
+      <geom name="box_top_col3" type="box" size="0.004 0.08 0.0064" pos="0.076 0 -0.0064" class="box"/>
+      <!-- 前边 -->
+      <geom name="box_top_col4" type="box" size="0.08 0.004 0.0064" pos="0 -0.076 -0.0064" class="box"/>
+      <!-- 后边 -->
+      <geom name="box_top_col5" type="box" size="0.08 0.004 0.0064" pos="0 0.076 -0.0064" class="box"/>
+      <!-- 把手横向杆 -->
+      <geom name="handle_col1" type="capsule" size="0.0064 0.07" euler="1.57 0 0" pos="0 0 0.0656" class="box"/>
+      <!-- 把手左竖杆 -->
+      <geom name="handle_col2" type="capsule" size="0.0064 0.028" pos="0 -0.07 0.0344" class="box"/>
+      <!-- 把手右竖杆 -->
+      <geom name="handle_col3" type="capsule" size="0.0064 0.028" pos="0 0.07 0.0344" class="box"/>
+    </body>
+  </worldbody>
+</mujoco>

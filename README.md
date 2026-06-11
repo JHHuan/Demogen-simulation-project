@@ -1,241 +1,172 @@
-# DemoGen 机器人仿真项目
+# DemoGen-Simulation/毕业设计
 
-本项目整合了 [DemoGen](https://github.com/TEA-Lab/DemoGen) 合成演示数据生成框架与 [RoboPal](https://github.com/NoneJou072/robopal) 机器人仿真环境，用于机器人操作的视觉运动策略学习研究。
+基于 [DemoGen](https://github.com/TEA-Lab/DemoGen) 合成演示数据生成框架与 [RoboPal](https://github.com/NoneJou072/robopal) 机器人仿真环境的视觉运动策略学习项目。仅凭单次人类遥操作演示，即可通过空间增强快速生成数百条合成演示数据，训练 3D Diffusion Policy (DP3)，并在仿真/真实环境中完成机器人操作任务。
 
-## 项目概述
-
-本项目基于以下核心组件：
-- **DemoGen**: 合成演示数据生成方法，仅凭一个真实世界的人类演示即可在几秒内生成数百个空间增强的合成演示
-- **RoboPal**: 基于 MuJoCo 物理引擎的多平台模块化机器人仿真框架
-- **Diffusion Policy**: 3D 扩散策略实现，用于训练视觉运动策略
-
-## 目录结构
+## 项目结构
 
 ```
-demogen/
-├── DemoGen-master/          # DemoGen 主项目
-│   ├── demo_generation/     # 演示生成核心代码
-│   ├── diffusion_policies/  # 扩散策略实现
-│   ├── data/                # 数据集目录
-├── robopal/                 # RoboPal 机器人仿真环境（适配 Python 3.8）
-│   ├── robopal/             # 核心代码
-│   ├── assets/             # 机器人模型和场景
-│   └── demos/              # 演示脚本
-└── README.md               # 本文件
+Demogen-simulation/
+├── DemoGen-master/              # DemoGen 核心框架
+│   ├── demo_generation/         # 合成演示数据生成（含任务配置）
+│   ├── diffusion_policies/      # DP3 策略训练与评估（含训练配置）
+│   ├── replay_eva/              # 仿真评估脚本
+│   ├── data/                    # 数据目录 (source_demos, datasets, ckpts, sam_mask)
+│   └── merge_zarr.py            # Pickle → Zarr 格式转换
+├── robopal/                     # RoboPal 仿真环境
+│   └── robopal/
+│       ├── collect_data/        # 数据采集脚本（各任务）
+│       ├── envs/                # 环境封装
+│       ├── robots/              # 机器人定义
+│       └── assets/              # 机器人模型与场景文件
+├── docs/                        # 文档
+│   ├── 环境配置.md
+│   └── 操作流程.md
+└── README.md
 ```
-
-## 环境配置
-
-### 1. 系统要求
-
-- **操作系统**: Linux (推荐 Ubuntu 20.04+)
-- **Python**: 3.8
-- **Conda**: 用于环境管理
-
-### 2. 创建 Conda 环境
-
-```bash
-
-# 创建新的 Python 3.8 环境
-conda create -n demogen python=3.8
-conda activate demogen
-```
-
-### 3. 安装基础依赖
-
-```bash
-# 安装 Python 基础包
-pip3 install imageio imageio-ffmpeg termcolor hydra-core==1.2.0 \
-    zarr==2.12.0 matplotlib setuptools==59.5.0 pynput h5py \
-    scikit-video tqdm
-
-# 安装其他科学计算包
-pip install numpy scipy scikit-learn pillow
-```
-
-### 4. 安装 Diffusion Policy
-
-```bash
-cd DemoGen-master/diffusion_policies
-pip install -e .
-cd ../..
-```
-
-### 5. 安装 DemoGen
-
-```bash
-cd DemoGen-master/demo_generation
-pip install -e .
-cd ../..
-```
-
-### 6. 安装 RoboPal（已适配 Python 3.8）
-
-RoboPal 已经过修改以兼容 Python 3.8，主要改动包括：
-- 修复了 Python 3.8 兼容性问题
-- 添加了 DemoGen 相机配置
-- 实现了标准数据格式输出
-
-```bash
-cd robopal
-pip install -r requirements.txt
-pip install -e .
-cd ..
-```
-
-### 7. 安装 MuJoCo
-
-本项目使用 MuJoCo 物理引擎进行仿真：
-
-```bash
-pip install mujoco
-```
-
-### 8. 验证安装
-
-运行 RoboPal 键盘遥操作演示验证安装：
-
-```bash
-python robopal/robopal/demos/demo_keyboard_teleop.py
-```
-
-**键盘控制说明**：
-- 方向键 ↑/↓/←/→: 控制末端在 x/y 平面移动（自动采集）
-- Ctrl + ↑/↓: 控制 z 轴移动（自动采集）
-- CapsLock: 切换爪子开/闭状态（自动采集）
-- 空格键: 手动录制当前状态一帧
-- r 键: 重置环境
-- q 键: 保存轨迹为 pickle 文件
-- c 键: 清除当前轨迹
-- ESC: 退出
 
 ## 数据格式
 
-本项目使用标准绝对位置格式，采集的数据包含：
+本项目使用标准绝对位置格式，每帧采集数据包含：
 
-- **point_cloud**: (T, 1024, 6) - XYZ+RGB 颜色
-- **image**: (T, 3, 84, 84) - RGB CHW 格式
-- **depth**: (T, 84, 84) - 深度图
-- **agent_pos**: (T, 7) - [x,y,z,qx,qy,qz,gripper] 当前实际位置
-- **action**: (T, 7) - [x,y,z,qx,qy,qz,gripper] 目标位置
+| 字段 | 形状 | 说明 |
+|------|------|------|
+| `point_cloud` | (T, 1024, 6) | XYZ 坐标 + RGB 颜色 |
+| `image` | (T, 3, 84, 84) | RGB 图像 (CHW 格式) |
+| `depth` | (T, 84, 84) | 深度图 |
+| `agent_pos` | (T, 7) | [x, y, z, qx, qy, qz, gripper] 末端当前位姿 |
+| `action` | (T, 7) | [x, y, z, qx, qy, qz, gripper] 末端目标位姿 |
 
-## 快速开始
+> 详细的环境安装与依赖配置请参阅 [环境配置](docs/环境配置.md)。
+> 完整的分步操作指南请参阅 [操作流程](docs/操作流程.md)。
 
-本项目提供完整的从数据收集到策略训练和部署的工作流程：
+---
 
-### 步骤 1: 收集仿真数据
+## 仿真实验
 
-使用键盘遥操作 Panda 机械臂收集演示数据：
+> 详细的环境安装与依赖配置请参阅 [环境配置](docs/环境配置.md)。
+> 完整的分步操作指南请参阅 [操作流程](docs/操作流程.md)。
 
-```bash
-python robopal/robopal/demos/demo_keyboard_teleop.py
-```
+### 实验一：样本数量与泛化性能
 
-**操作说明**：
-- 方向键控制末端移动，CapsLock 控制夹爪
-- 程序会自动采集每帧数据（点云、RGB图像、深度图、状态、动作）
-- 按 `q` 键保存轨迹到 `robopal/robopal/demos/collected_data/`
-- 按 `ESC` 退出
+**目的**：研究合成样本数量对策略空间泛化能力的影响。
 
-注：
-    修改demo_keyboard_teleop.py脚本336行，sam_mask_dir = "path/to/your/dir",生成第一帧图片;
-  
-    需要将遥操采集的pickle文件复制在/Demogen-simulation/DemoGen-master/data/source_demos/<任务名>下，再执行步骤2
+以 Pick\_cube 单物体抓取任务为研究对象，在 MuJoCo 仿真环境中使用 FR3 机械臂 + PandaHand 夹爪，固定 0.3m × 0.3m 测试工作空间，分别构造 25、36、49、64、81、100、121、144、169 组合成样本的数据集，每组测试 100 个回合。
 
-### 步骤 2: 格式转换为 Zarr
+**成功判定**：绿色立方体被抓起高度 > 0.46m，且夹爪与立方体 X 方向对齐误差 ≤ 0.03m。
 
-将收集的 pickle 数据转换为 Zarr 格式供 DemoGen 使用：
+**结果**：
 
-```bash
-cd DemoGen-master
-python merge_zarr.py <实验名称>
-```
+<!-- 图：折线图 - 合成样本数量 vs 成功率 -->
+![样本数量与泛化性能](docs/figures/exp1_sample_count.png)
 
-数据将从 `data/source_demos/<实验名称>/` 读取并保存到 `data/datasets/source/<实验名称>.zarr`
+当合成样本从 25 组增加到 121 组时，成功率由 21% 提升至 88%。继续增加至 144 组（87%）和 169 组（79%）后性能不再提升，原因是视觉不匹配问题随空间范围扩大而累积。
 
-### 步骤 3: 图像分割（SAM）
+<!-- 图：视觉不匹配示意 -->
+![视觉不匹配示意](docs/figures/exp1_visual_mismatch.png)
 
-使用 Segment Anything Model (SAM) 对目标物体进行分割：
+**结论**：合成样本数量与泛化性能呈非线性关系，121–144 组样本在 Pick\_cube 任务上取得最佳平衡。
 
-```bash
-cd DemoGen-master/data/sam_mask
-python segment_interactive.py \
-    --image "0216-cube/source.jpg" \
-    --output "0216-cube/green cube.jpg"
-```
+### 实验二：点云观测质量对泛化性能的影响
 
-**操作说明**：
-- 左键点击选择前景点（绿色）
-- 右键点击选择背景点（红色）
-- 按 `s` 执行分割，按 `q` 保存并退出
+**目的**：比较单相机原始点云与双相机点云补全对策略空间泛化的作用。
 
-注：步骤1会自动生成第一帧图像在sam_mask_dir = "path/to/your/dir"下
+在 Pick\_cube（0.4m × 0.4m 工作空间，225 组样本）和 Press\_button（0.3m × 0.3m，144 组样本）两个任务上开展对比：
 
-### 步骤 4: 生成合成数据
+- **单相机**：正前方视角采集，统一采样 1024 点
+- **双相机补全**：左右斜前方各 512 点，融合为 1024 点
 
-使用 DemoGen 生成大量合成演示数据：
+<!-- 图：单相机 vs 双相机点云对比 -->
+![点云观测对比](docs/figures/exp2_pointcloud_compare.png)
 
-```bash
-cd DemoGen-master/demo_generation
-python gen_demo.py --config-path config/<配置文件>.yaml
-```
+**结果**：
 
-或使用提供的脚本：
-```bash
-bash gen_demo.sh cube test grid 16 true
-```
+| 任务 | 工作空间 | 单相机 | 双相机补全 |
+|------|----------|--------|------------|
+| Pick\_cube | 0.4m × 0.4m | 50% | **77%** |
+| Press\_button | 0.3m × 0.3m | 64% | **99%** |
 
-生成的数据将保存在 `data/datasets/generated/` 目录
+Press\_button 任务提升尤为显著（+35%），因为按钮按压对局部几何结构和接触位置精度更敏感，多视角点云补全有效缓解了遮挡和深度缺失。
 
-### 步骤 5: 训练策略模型
+**结论**：点云观测完整性是影响空间泛化的关键因素，双相机补全在高精度接触类任务上提升更大。
 
-使用 DP3 (3D Diffusion Policy) 训练视觉运动策略：
+### 实验三：合成数据与真实数据对比
 
-```bash
-cd DemoGen-master/diffusion_policies
-bash train.sh <实验名称> dp3 <任务名称> <随机种子>
-```
+**目的**：验证单样本演示合成方法能否替代多组真实示教数据。
 
-示例：
-```bash
-bash train.sh 0216-cube_test_100 dp3 cube 0
-```
+在 5 个桌面操作任务上比较四种数据来源：
 
-训练过程中会在终端显示实时进度，模型检查点保存在 `data/ckpts/` 目录
+| 任务 | 类型 | Source 10 | Source 25 | 合成 | 合成+补全 |
+|------|------|-----------|-----------|------|-----------|
+| Pick\_cube | 抓取 | 50% | 75% | 87% | 90% |
+| Stack\_cube | 堆叠 | 44% | 95% | 67% | 79% |
+| Close\_box | 开合（灵巧手） | 44% | 95% | 76% | 95% |
+| Press\_button | 按压 | 54% | 90% | 64% | 99% |
+| Assembly | 装配 | 47% | 83% | 78% | 80% |
+| **平均** | | **47.8%** | **87.6%** | **74.4%** | **88.8%** |
 
-### 步骤 6: 部署和评估
+<!-- 视频：5个任务的仿真执行视频 -->
+| 任务 | 视频 |
+|------|------|
+| Pick\_cube | [仿真视频](docs/figures/视频2.mp4) |
+| Stack\_cube | [仿真视频](docs/figures/视频0.mp4) |
+| Close\_box | [仿真视频](docs/figures/视频4.mp4) |
+| Press\_button | [仿真视频](docs/figures/视频1.mp4) |
+| Assembly | [仿真视频](docs/figures/视频3.mp4) |
 
-在仿真环境中部署训练好的策略：
+**结论**：单样本演示合成（74.4%）远超 10 组真实演示（47.8%）；加补全后（88.8%）略优于 25 组真实演示（87.6%）。单条源演示采集仅需 1–2 分钟，合成数百条数据仅需数秒，相比采集 25 组真实演示（数小时级）大幅降低成本。
 
-```bash
-cd DemoGen-master/diffusion_policies
-python evaluate_sim.py checkpoint=../data/ckpts/<检查点路径>/checkpoints/<模型编号>.ckpt
-```
+---
 
-### （可选）步骤 7: 回放训练数据
+## 真机验证
 
-验证训练数据质量，直接执行训练数据中记录的动作：
+### 平台配置
 
-```bash
-cd DemoGen-master/diffusion_policies
-python replay_training_data.py
-```
+| 组件 | 型号 |
+|------|------|
+| 机械臂 | FR3 (Franka Emika) |
+| 末端执行器 | Linker Hand O6 灵巧手 |
+| 相机 | Intel RealSense L515（固定于工作空间正上方） |
+| 通信 | TCP（机械臂）+ CAN 总线（灵巧手） |
 
-## 工作流程图
+### 实验设置
 
-```
-键盘遥操作收集 → Zarr格式转换 → SAM图像分割 → DemoGen生成合成数据
-                                                  ↓
-                                           DP3策略训练
-                                                  ↓
-                                           仿真环境部署评估
-```
+单物体抓取任务：目标为放置在桌面上的榴莲形状道具。每次实验机械臂回到初始位姿，道具随机放置在工作空间内。策略未经任何真实环境微调，直接从仿真迁移部署。
+
+### 实验结果
+
+10 次测试中成功完成 5 次抓取（成功率 50%）。
+
+**成功案例**：
+
+<!-- 视频：真机成功抓取 -->
+[真机成功视频](docs/figures/real_success.mp4)
+
+机器人从 HOME 位姿自主接近目标，基于实时点云观测调整末端姿态，灵巧手准确闭合、稳定抓取榴莲道具并成功提起。
+
+**失败案例**：
+
+<!-- 视频：真机失败 -->
+[真机失败视频](docs/figures/real_failure.mp4)
+
+主要失败原因：
+- 末端对齐不准确，未能精确到达目标位置
+- 灵巧手夹持不稳，物体在抓取过程中滑落
+- 点云观测质量不足，影响策略决策精度
+
+**结论**：基于合成数据训练的策略能够成功部署到真实机器人平台，未经真机微调即实现了端到端抓取，初步验证了单样本演示合成方法的 Sim-to-Real 迁移可行性。
+
+---
+
+## 致谢
+
+本项目基于以下开源工作：
+
+- **DemoGen**: [TEA-Lab/DemoGen](https://github.com/TEA-Lab/DemoGen) — 合成演示数据生成框架
+- **RoboPal**: [NoneJou072/robopal](https://github.com/NoneJou072/robopal) — MuJoCo 机器人仿真框架
+- **DP3**: 3D Diffusion Policy for visuomotor robot manipulation
 
 ## 引用
 
-如果本项目对您的研究有帮助，请引用以下论文：
-
-### DemoGen
 ```bibtex
 @article{xue2025demogen,
   title={DemoGen: Synthetic Demonstration Generation for Data-Efficient Visuomotor Policy Learning},
@@ -243,23 +174,19 @@ python replay_training_data.py
   journal={arXiv preprint arXiv:2502.16932},
   year={2025}
 }
-```
 
-### RoboPal
-```bibtex
 @software{Zhou_robopal_A_Simulation_2024,
-author = {Zhou, Haoran and Huang, Yichao and Zhao, Yuhan and Lu, Yang},
-doi = {10.5281/zenodo.11078757},
-month = apr,
-title = {{robopal: A Simulation Framework based Mujoco}},
-url = {https://github.com/NoneJou072/robopal},
-version = {0.3.1},
-year = {2024}
+  author = {Zhou, Haoran and Huang, Yichao and Zhao, Yuhan and Lu, Yang},
+  doi = {10.5281/zenodo.11078757},
+  month = apr,
+  title = {{robopal: A Simulation Framework based Mujoco}},
+  url = {https://github.com/NoneJou072/robopal},
+  version = {0.3.1},
+  year = {2024}
 }
 ```
 
 ## 许可证
 
-本项目遵循相关子项目的许可证：
 - DemoGen: MIT License
-- RoboPal: Apache 2.0 License 
+- RoboPal: Apache 2.0 License

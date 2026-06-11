@@ -4,8 +4,8 @@
 使用点击来选择要分割的物体
 cd /home/hjh/git_code/demogen/DemoGen-master/data/sam_mask
 python segment_interactive.py \
-    --image "0218-cube/0/source.jpg" \
-    --output "0218-cube/0/green cube.jpg"
+    --image "source.jpg" \
+    --output "real_demo_2/0/obj.jpg"
 
 """
 

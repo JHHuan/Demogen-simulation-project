@@ -1,0 +1,35 @@
+_target_: demo_generation.demogen_real.DemoGen
+
+data_root: ../data
+source_name: real_demo_3
+
+task_n_object: 1
+
+use_linear_interpolation: false
+interpolate_step_size: 0.01
+
+use_manual_parsing_frames: true
+parsing_frames:
+  motion-1: 0
+  skill-1: 24
+  motion-2: null
+  skill-2: null
+
+# 真实环境的mask名称：双物体任务
+mask_names:
+  object: obj
+  # target: obj2
+
+trans_range:
+  src:
+    object: [[0, 0, 0], [0, 0, 0]]
+    # target: [[0, 0, 0], [0, 0, 0]]
+  test:
+    object: [[-0.15, -0.15, 0], [0.15, 0.15, 0]]
+    # target: [[-0.10, -0.15, 0], [0.10, 0.0, 0]]
+
+generation:
+  range_name: test
+  n_gen_per_source: 16
+  render_video: True
+  mode: grid

@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<mujoco model="buttonbox">
+  <compiler angle="radian" autolimits="true"/>
+
+  <asset>
+    <texture name="T_btn" type="cube" file="textures/metal1.png"/>
+    <material name="btn_col" rgba="0.3 0.3 1.0 0.5" shininess="0" specular="0"/>
+    <material name="btn_red" rgba=".6 0 0 1" shininess="1" reflectance=".7" specular=".5"/>
+    <material name="btn_yellow" rgba=".7 .5 0 1" shininess="1" reflectance=".7" specular=".5"/>
+    <material name="btn_black" rgba=".15 .15 .15 1" shininess="1" reflectance=".7" specular=".5"/>
+    <material name="btn_metal" rgba=".8 .8 .8 1" texture="T_btn" shininess="1" reflectance="1" specular="1"/>
+
+    <mesh name="stopbot" file="objects/buttonbox/meshes/stopbot.stl" scale="0.25 0.25 0.25"/>
+    <mesh name="stopbutton" file="objects/buttonbox/meshes/stopbutton.stl" scale="0.4 0.4 0.4"/>
+    <mesh name="stopbuttonrim" file="objects/buttonbox/meshes/stopbuttonrim.stl" scale="0.25 0.25 0.25"/>
+    <mesh name="stopbuttonrod" file="objects/buttonbox/meshes/stopbuttonrod.stl" scale="0.25 0.25 0.25"/>
+    <mesh name="stoptop" file="objects/buttonbox/meshes/stoptop.stl" scale="0.25 0.25 0.25"/>
+  </asset>
+
+  <default>
+    <default class="buttonbox_base">
+      <joint armature="0.001" damping="2" limited="true"/>
+      <geom conaffinity="0" contype="0" group="1" type="mesh"/>
+    </default>
+    <default class="buttonbox_col">
+      <geom conaffinity="1" condim="3" contype="1" group="4" material="btn_col"
+            solimp="0.99 0.99 0.01" solref="0.01 1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="buttonbox" pos="0.4 0.0 0.46" euler="-1.5708 0 0" childclass="buttonbox_base">
+      <freejoint name="buttonbox:joint"/>
+      <inertial mass="0.5" pos="0 0 0" diaginertia="0.01 0.01 0.01"/>
+
+      <!-- Visual meshes -->
+      <geom material="btn_black" mesh="stopbot" pos="0 -0.015 0"/>
+      <geom material="btn_metal" euler="1.57 0 0" mesh="stopbuttonrim" pos="0 -0.02225 0"/>
+      <geom material="btn_yellow" mesh="stoptop" pos="0 -0.015 0"/>
+
+      <!-- Collision geoms (box shape) -->
+      <geom class="buttonbox_col" pos="0 0.003 0.018" size="0.03 0.0255 0.012" type="box"/>
+      <geom class="buttonbox_col" pos="0 0.003 -0.018" size="0.03 0.0255 0.012" type="box"/>
+      <geom class="buttonbox_col" pos="-0.01825 0.003 0" size="0.01175 0.0255 0.006" type="box"/>
+      <geom class="buttonbox_col" pos="0.01825 0.003 0" size="0.01175 0.0255 0.006" type="box"/>
+
+      <!-- Button (slide joint) -->
+      <body name="button" childclass="buttonbox_base">
+        <inertial pos="0 -0.048375 0" mass="0.01" diaginertia="0.001 0.001 0.001"/>
+        <joint name="btnbox_joint" pos="0 0 0" axis="0 -1 0" type="slide"
+               limited="true" range="-0.015 0" stiffness="100" damping="10"/>
+        <geom material="btn_red" euler="1.57 0 0" mesh="stopbutton" pos="0 -0.0395 0" name="btnGeom"/>
+        <geom material="btn_black" euler="1.57 0 0" mesh="stopbuttonrod" pos="0 -0.0315 0"/>
+
+        <geom class="buttonbox_col" euler="1.57 0 0" pos="0 -0.032 0" size="0.00525 0.00975" type="cylinder"/>
+        <geom class="buttonbox_col" euler="1.57 0 0" pos="0 -0.0415 0" size="0.0065 0.002" type="cylinder"/>
+        <geom class="buttonbox_col" euler="1.57 0 0" pos="0 -0.04575 0" size="0.01075 0.00275" type="cylinder"/>
+      </body>
+    </body>
+  </worldbody>
+</mujoco>

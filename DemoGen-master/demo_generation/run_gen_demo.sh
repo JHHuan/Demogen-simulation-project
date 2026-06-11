@@ -1,4 +1,4 @@
-bash gen_demo.sh flower test grid 16 True
+bash gen_demo.sh task1 test grid 16 True
 bash gen_demo.sh mug test grid 16 True
 bash gen_demo.sh egg test grid 9 True
 bash gen_demo.sh sauce test grid 9 True
