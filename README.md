@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🤖 DemoGen-Simulation
+# 🤖 基于单样本演示合成的机器人模仿学习
 
-**基于合成演示数据的机器人视觉运动策略学习**
+**One-Shot Demo Synthesis for Robot Imitation Learning**
 
 仅凭 **单次人类遥操作演示**，通过空间增强快速生成数百条合成数据，训练 3D Diffusion Policy (DP3)，在仿真/真实环境中完成机器人操作任务。
 
