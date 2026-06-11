@@ -104,14 +104,20 @@ Press\_button 任务提升尤为显著（+35%），因为按钮按压对局部�
 | Assembly | 装配 | 47% | 83% | 78% | 80% |
 | **平均** | | **47.8%** | **87.6%** | **74.4%** | **88.8%** |
 
-<!-- 视频：5个任务的仿真执行视频 -->
-| 任务 | 视频 |
-|------|------|
-| Pick\_cube | [仿真视频](docs/figures/视频2.mp4) |
-| Stack\_cube | [仿真视频](docs/figures/视频0.mp4) |
-| Close\_box | [仿真视频](docs/figures/视频4.mp4) |
-| Press\_button | [仿真视频](docs/figures/视频1.mp4) |
-| Assembly | [仿真视频](docs/figures/视频3.mp4) |
+**Pick\_cube**
+![Pick_cube 仿真](docs/figures/视频2.gif)
+
+**Stack\_cube**
+![Stack_cube 仿真](docs/figures/视频0.gif)
+
+**Close\_box**
+![Close_box 仿真](docs/figures/视频4.gif)
+
+**Press\_button**
+![Press_button 仿真](docs/figures/视频1.gif)
+
+**Assembly**
+![Assembly 仿真](docs/figures/视频3.gif)
 
 **结论**：单样本演示合成（74.4%）远超 10 组真实演示（47.8%）；加补全后（88.8%）略优于 25 组真实演示（87.6%）。单条源演示采集仅需 1–2 分钟，合成数百条数据仅需数秒，相比采集 25 组真实演示（数小时级）大幅降低成本。
 
@@ -139,14 +145,14 @@ Press\_button 任务提升尤为显著（+35%），因为按钮按压对局部�
 **成功案例**：
 
 <!-- 视频：真机成功抓取 -->
-[真机成功视频](docs/figures/real_success.mp4)
+![真机成功](docs/figures/real_success.gif)
 
 机器人从 HOME 位姿自主接近目标，基于实时点云观测调整末端姿态，灵巧手准确闭合、稳定抓取榴莲道具并成功提起。
 
 **失败案例**：
 
 <!-- 视频：真机失败 -->
-[真机失败视频](docs/figures/real_failure.mp4)
+![真机失败](docs/figures/real_failure.gif)
 
 主要失败原因：
 - 末端对齐不准确，未能精确到达目标位置
